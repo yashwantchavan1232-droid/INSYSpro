@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INSYS · Dashboard</title>
+  <style>
+    body { background: #0b0715; color: white; font-family: system-ui, sans-serif; padding: 30px; }
+    .stock { border: 1px solid #a855f7; border-radius: 16px; padding: 16px; margin: 10px 0; background: #1a1035; }
+    .buy { color: #00ffaa; } .hold { color: #ffd700; } .sell { color: #ff2d78; }
+    button { background: #a855f7; border: none; color: white; padding: 12px 24px; border-radius: 40px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>📈 INSYS Stock Dashboard</h1>
+  <button onclick="loadData()">🔄 Refresh Data</button>
+  <div id="stocks-container">Loading...</div>
+  <div id="status" style="margin-top: 20px; color: #aaa;"></div>
+
+  <script>
+    const container = document.getElementById('stocks-container');
+    const statusDiv = document.getElementById('status');
+
+    async function loadData() {
+      statusDiv.textContent = '⏳ Fetching insys_stocks.json...';
+      try {
+        const res = await fetch('insys_stocks.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        
+        const stocks = data.stocks || [];
+        if (stocks.length === 0) {
+          container.innerHTML = '<p>No stocks found.</p>';
+          statusDiv.textContent = '⚠️ JSON loaded but empty stocks array.';
+          return;
+        }
+
+        let html = '';
+        stocks.forEach(s => {
+          const signalClass = s.signal.toLowerCase();
+          html += `<div class="stock">
+            <strong>${s.symbol}</strong> — ₹${s.price} 
+            <span class="${signalClass}">${s.signal} (${s.confidence}%)</span>
+            <div style="font-size:14px; color:#ccc;">${s.reasons?.[0] || ''}</div>
+          </div>`;
+        });
+        container.innerHTML = html;
+        statusDiv.textContent = `✅ Loaded ${stocks.length} stocks from local JSON.`;
+        console.log('✅ Data loaded:', data);
+      } catch (err) {
+        container.innerHTML = '<p style="color:red;">Failed to load data.</p>';
+        statusDiv.textContent = '❌ Error: ' + err.message;
+        console.error('Fetch error:', err);
+      }
+    }
+
+    // Auto-load on page open
+    loadData();
+  </script>
+</body>
+</html>
